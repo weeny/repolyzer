@@ -2,21 +2,105 @@
     <head>
         <title>Githubalyzer</title>
         <script src="js/angular.min.js"></script>
+
+
+        <style>
+
+
+        </style>
     </head>
 
     <body>
 
-       <div ng-app="githubalyzer" ng-controller="main">
+        <div ng-app="githubalyzer" ng-controller="main">
+            <div class="controls">
+                <form action="#">
+                    <caption for="projectname">Project Name:</caption>
+                    <input type="text" name="projectname" ng-model="projectname">
 
+                    <input type="checkbox" name="subscribe" ng-model="subscribe">
+                    <caption for="subscribe">(subscribe)</caption>
+                    <input type="checkbox" name="timescale" ng-model="timescale">
+                    <caption for="timescale">(animate)</caption>
+                    <input type="submit" value="Load" ng-click="load()">
+                    <input type="submit" value="Play" ng-click="playback()">
+                </form>
+
+            </div>
         </div>
 
 
     </body>
     <script>
-        var main=angular.module("githubalyzer",[]);
-        main.controller("main",function(s,http) {
 
-        }
+
+
+        var main=angular.module("repolyzer",[]);
+
+
+
+        main.controller("main",function($s,$http) {
+
+
+
+
+            var MAPQUEST={
+                KEY:"gjeJvYfSE93GrQS2MJJCAbUkYUko7vTn",
+                URL:"http://open.mapquestapi.com",
+                Locations:{},
+                geocode:function geocode(location) {
+                    //Geocode() returns a promise from angular $http.
+                    var mapquest=this;
+                    $http.get([this.URL,"geocode","v1","address"].join("/"),
+                              {key:this.KEY,location:encodeURIComponent(location)})
+                    .success(function (data,status,headers,config) {
+                        console.debug(data)
+
+                    })
+                    .error(function (data,status,headers,config) {
+                        console.debug(data)
+
+                    });
+                }
+            };
+
+            var GITHUB={
+                URL:"https://api.github.com",
+                Users:{},
+                Repos:{},
+                user:function user(username) {
+                    //commits takes repo in form owner/reponame
+                    var github=this;
+                    $http.get([this.URL,"users",username].join("/"))
+                    .success(function (data,status,headers,config) {
+                        console.debug(data)
+
+                    })
+                    .error(function (data,status,headers,config) {
+                        console.debug(data)
+
+                    });
+                },
+                commits:function commits(repo) {
+                    //commits takes repo in form owner/reponame
+                    var github=this;
+                    $http.get([this.URL,"repos",repo,"commits"].join("/"))
+                    .success(function (data,status,headers,config) {
+                        console.debug(data)
+
+                    })
+                    .error(function (data,status,headers,config) {
+                        console.debug(data)
+
+                    });
+                }
+
+            }
+
+            $s.load=function load() {
+                GITHUB.commits($s.projectname);
+            }
+        });
 
 
     </script>
