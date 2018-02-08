@@ -58,15 +58,7 @@ main.service('Github', function($http) {
   GithubRepo.prototype.timestamps=[];
   GithubRepo.prototype.shas=[];
   GithubRepo.prototype.cursor=-1;
-   /* reponame:"",
-    Files:{},
-    commits:[],
-    timestamps:[],
-    shas:[],
-    cursor:-1,
-
-  }*/
-
+  GithubRepo.prototype.page=null;
   var odp=Object.defineProperty;
   GithubRepo.def=function(name,value) {
     odp(GithubRepo.prototype,name,value);
@@ -86,12 +78,19 @@ main.service('Github', function($http) {
     var data=this.commits[this.cursor];
     for(var i=0;i<data.files.length;i++) {
       var f=data.files[i];
+
+
       if(f.filename in this.Files) {
+        var F=this.Files[f.filename];
+        f.size+=f.additions;
+        f.size-=f.deletions;
+        f.count++;
         this.updateFile(this.Files[f.filename],f);
       } else {
 
+        f.size=f.additions;
+        f.count=1;
         this.Files[f.filename]=this.addFile(f);
-
       }
     }
 
@@ -123,9 +122,10 @@ main.service('Github', function($http) {
   GithubRepo.def("processcommits",{value:function processcommits(data,status,headers,config) {
     var url=null;
     var githubrepo=this;
-    var page=null;
+
     if (!(headers instanceof Function)) {
       // first callof processcommits
+      githubrepo.page=null;
       url=[CONFIG.URL,"repos",this.reponame,"commits"].join("/");
     } else {
       headers=headers();
@@ -134,14 +134,14 @@ main.service('Github', function($http) {
 
         if(prev!=null) {
           // at last page or some page in middle
-          page++;
+          githubrepo.page++;
           url=prev[1];
 
         } else {
-          if(page==null) {
+          if(githubrepo.page==null) {
             //at first page, go to last page
             var last=headers.link.match(/^.*<(.+?)>;\W*?rel="last"/);
-            page=0;
+            githubrepo.page=0;
             if(last!=null) {
               url=last[1];
             }
@@ -153,7 +153,7 @@ main.service('Github', function($http) {
         }
       } else {
         // one-page listing, finalize callback
-        page=1;
+        githubrepo.page=1;
         url=null;
       }
     }
@@ -168,7 +168,7 @@ main.service('Github', function($http) {
       }).error(function (data,status,headers,config) {
       });
     }
-    if(page!=null&&page>0) {
+    if(githubrepo.page!=null&&githubrepo.page>0) {
       if(data instanceof Array) {
         for(var i=data.length-1;i>=0;i--) {
           //console.debug({id:githubrepo.cursor,date:data[i].commit.author.date,data:data[i]});
