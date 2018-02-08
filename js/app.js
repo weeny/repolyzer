@@ -5,7 +5,7 @@ var main=angular.module("repolyzer",[]);
 
 
 
-main.controller("main",function($scope,$http,Github) {
+main.controller("main",function($scope,$http,$templateCache,$compile,Github) {
   var params={};
   var cookies={};
   var GITHUB=Github.CONFIG;
@@ -69,21 +69,49 @@ main.controller("main",function($scope,$http,Github) {
       document.getElementById("workspace").appendChild(Repo.element);
 
       // add hooks to place and update elements
+
+      //hook for before update to clear status classes and set age
+      Repo.update=function() {
+        console.debug({"updating:":this.Files});
+        var filenames=Object.keys(this.Files);
+        for(var j=0;j<filenames.length;j++) {
+          var filename=filenames[j];
+          var file=this.Files[filename];
+          file.setAttribute("class","file")
+          file.age++;
+
+          file.style.transform="translate3d(0,-"+(file.age/2.0)+"px,-"+file.age+"px)";
+         // file.style.margin=file.age+"em"
+        }
+      }
       Repo.addFile=function addFile(f) {
         console.debug({adding:f});
         var file=document.createElement("div");
-        file.innerHTML=f.filename;
-        file.setAttribute("class","file");
-        this.element.appendChild(file);
-        file.size=f.additions;
-        file.style.padding=(20+(f.size/20))+"px"
 
+        file.innerHTML=f.filename;
+        file.setAttribute("class","file new");
+        this.element.appendChild(file);
+        file.style.padding=(20+(f.size/20))+"px"
+        file.age=0;
+
+        file.style.transform="translate3d(0,0,0)";
         return file;
       }
       Repo.updateFile=function updateFile(file,f) {
-        file.size+=f.additions;
-        file.size-=f.deletions;
 
+        file.age=0;
+       // file.remove();
+        file.style.transform="translate3d(0,0,0)";
+       //// Repo.element.insertBefore(file,Repo.element.firstChild);
+        file.style.width=(10*Math.log(f.size))+"px"
+        file.style.height=(7*Math.log(f.size))+"px"
+        if(f.status=="deleted"||f.status=="removed") {
+          file.setAttribute("class","file deleted");
+        } else if(f.status=="added") {
+          file.setAttribute("class","file new");
+        } else {
+          file.setAttribute("class","file updated")
+        }
         //file.style.padding=(20+(file.size/20))+"px"
       }
     }

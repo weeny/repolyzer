@@ -1,5 +1,7 @@
-body { margin:0;padding:0; }
+body { margin:0;padding:0;overflow:hidden; -webkit-transform-style:preserve-3d;transform-style:preserve-3d;}
 * { font-family:monospace }
+#workspace { perspective:10px;overflow:scroll;position:absolute;top:4em;left:0;right:0;bottom:0; }
+
 button, input[type="submit"] {
   padding: 0.3em 1em;
   line-height: 1.6em;
@@ -10,15 +12,27 @@ button, input[type="submit"] {
   display: inline-block;
   background: rgb(90,90,120);
   color: white;
-  padding: 0.5em;
+  padding: 0 0.5em;
   margin: 0 auto;
   position: fixed;
-top:0;
+  height: 3em;
+  line-height: 3em;
+  top: 0;
 }
-#workspace { margin-top:4em; }
-.file { transition:background-color 0.5s,padding 0.25s; display:inline-block
-  ;background-color:rgb(100,100,100);padding:1em;margin:1em;}
-.file .updated { background-color:blue; }
+.repo.hidden { opacity:0;pointer-events:none; }
+
+.file {
+  transition:background-color 0.5s,border-color 0.5s,transform 0.5s ease-in-out;
+  padding 0.25s;
+  display:inline-block;
+  border:3px solid rgb(100,100,100);
+  padding:1em;margin:1em;
+}
+
+.file.new { border-color:green; }
+
+.file.updated { border-color:blue; }
+
 #authmodal { width:100%;height:100%;z-index:10000;background-color:rgba(0,0,0,0.5);position:fixed;top:0; }
 #authmodal>div {
   text-align: center;

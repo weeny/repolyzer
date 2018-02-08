@@ -67,6 +67,7 @@ main.service('Github', function($http) {
   //non-enumerable properties, hooks, events, and methods
   GithubRepo.def("element",{value:null,writable:true});
 
+  GithubRepo.def("update",{value:function(){},writable:true});
   GithubRepo.def("addFile",{value:function(){},writable:true});
   GithubRepo.def("dropFile",{value:function(){},writable:true});
   GithubRepo.def("updateFile",{value:function(){},writable:true});
@@ -74,8 +75,9 @@ main.service('Github', function($http) {
 
   GithubRepo.def("stepforward",{value:function() {
     this.cursor++;
-
+    this.update();
     var data=this.commits[this.cursor];
+    //apply current commit
     for(var i=0;i<data.files.length;i++) {
       var f=data.files[i];
 
@@ -96,6 +98,27 @@ main.service('Github', function($http) {
 
   }});
   GithubRepo.def("stepbackward",{value:function() {
+    //undo current commit
+    var data=this.commits[this.cursor];
+    //apply current commit
+    for(var i=0;i<data.files.length;i++) {
+      var f=data.files[i];
+
+
+      if(f.filename in this.Files) {
+        var F=this.Files[f.filename];
+        f.size-=f.additions;
+        f.size+=f.deletions;
+        f.count--;
+        this.updateFile(this.Files[f.filename],f);
+      } else {
+
+        f.size=f.additions;
+        f.count=1;
+        this.Files[f.filename]=this.addFile(f);
+      }
+    }
+
     this.cursor--;
   }});
 
