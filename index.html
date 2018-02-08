@@ -1,7 +1,11 @@
 <html>
     <head>
-        <script>
-            //Check for github authentication first.
+        <script type="text/ng-template" id="/file.tpl">
+        <div class="file">
+        <span class="filename" ng-model="filename">{{ model.filename }}</span>
+        <span class="size" ng-model="filesize">{{ model.filesize }}</span>
+        <span class="num" ng-model="numcommits">{{ model.filesize }}</span>
+        </div>
 
         </script>
         <title>Repolyzer</title>
@@ -21,9 +25,6 @@
                     </h1>
                     <button ng-click="auth()">Continue to github to authorize</button>
                 </div>
-            </div>
-              <div id="timeline" >
-
             </div>
             <div id="notifications">
 
