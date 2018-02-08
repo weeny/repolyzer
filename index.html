@@ -39,7 +39,7 @@
 
 
 
-        main.controller("main",function($s,$http) {
+        main.controller("main",function($scope,$http) {
 
 
 
@@ -97,8 +97,8 @@
 
             }
 
-            $s.load=function load() {
-                GITHUB.commits($s.projectname);
+            $scope.load=function load() {
+                GITHUB.commits($scope.projectname);
             }
         });
 
