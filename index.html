@@ -199,7 +199,7 @@
 
                 auth:function auth(code) {
                     if(code) {
-                        $http.Post("https://github.com/login/oauth/access_token",
+                        $http.post("https://github.com/login/oauth/access_token",
                                    {client_id:GITHUB.client_id,code:code,client_secret:GITHUB.client_secret})
                         .success(function (data,status,headers,config) {
                             console.debug({authdata:data});
