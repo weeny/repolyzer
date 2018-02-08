@@ -6,228 +6,53 @@
         </script>
         <title>Repolyzer</title>
         <script src="js/angular.min.js"></script>
+        <link rel="stylesheet" href="assets/style.css">
 
+        </head>
 
-        <style>
-            body { margin:0;padding:0; }
-            * { font-family:monospace }
-            #authmodal { width:100%;height:100%;z-index:10000;background-color:rgba(0,0,0,0.5) }
-            #authmodal>h1 { width:50%;text-align:center;position:absolute;margin:25% auto;top:0;bottom:0;height:20em;}
-            #authmodal>h1>button { font-size:1em;text-align:center; width:50%;height:4em;display:block;padding:1em; }
-        </style>
-    </head>
-
-    <body>
+    <body onload="document.body.setAttribute('class','loaded')">
 
         <div ng-app="repolyzer" ng-controller="main">
 
             <div id="authmodal">
-                <h1>This app requires github authorization.
+                <div>
+                    <h1>This app requires github authorization.
+
+                    </h1>
                     <button ng-click="auth()">Continue to github to authorize</button>
-                </h1>
-            </div>
-            <div id="workspace">
-                <div class="world">
                 </div>
             </div>
-            <div id="timeline" >
+              <div id="timeline" >
 
             </div>
             <div id="notifications">
 
             </div>
             <div id="controls">
-                <form action="#">
-                    <caption for="projectname">Project Name:</caption>
-                    <input type="text" name="projectname" ng-model="projectname">
 
-                    <input type="checkbox" name="subscribe" ng-model="subscribe">
-                    <caption for="subscribe">(subscribe)</caption>
-                    <input type="checkbox" name="timescale" ng-model="timescale">
-                    <caption for="timescale">(animate)</caption>
-                    <input type="submit" value="Load" ng-click="load()">
-                    <input type="submit" value="Play" ng-click="playback()">
-                    <input type="submit" value="Squishy" ng-click="load('fluffhub/squishy')">
-                </form>
+                <caption for="projectname">Project Name:</caption>
+                <input type="text" name="projectname" placeholder="owner/reponame" ng-model="projectname">
+
+                <input type="checkbox" name="subscribe" ng-model="subscribe">
+                <caption for="subscribe">(subscribe)</caption>
+                <input type="checkbox" name="timescale" ng-model="timescale">
+                <caption for="timescale">(animate)</caption>
+                <button name="Load" ng-click="load()">Load</button>
+                <button name="Play" ng-click="playback()">Play</button>
+                <button name="Squishy" ng-click="load('weeny/repolyzer')">Repolyzer</button>
+                <button name="Repolyzer" ng-click="load('fluffhub/squishy')">Squishy</button>
 
             </div>
+            <div id="workspace">
+
+            </div>
+
         </div>
 
 
     </body>
-    <script>
+        <script src="js/app.js">   </script>
+         <script src="js/github.api.js"></script>
 
 
-
-        var main=angular.module("repolyzer",[]);
-
-
-
-        main.controller("main",function($scope,$http) {
-            var params={};
-            window.location.search.substr(1).split("&").map(function(param) {
-                var kv=param.split("=");
-                params[kv[0]]=decodeURIComponent(kv[1])
-            });
-
-            var homeurl="https://weeny.github.io/repolyzer";
-            (function authorize(cookie) {
-                var cookies=cookie.split(";");
-                var authorized=false
-                for(var i=0;i<cookies.length;i++) {
-                    var kv=cookies[i].split('=');
-                    if(kv[0]=="githubtoken") {
-
-                    }
-
-                }
-
-            })(document.cookie)
-
-
-
-
-
-            var MAPQUEST={
-                KEY:"gjeJvYfSE93GrQS2MJJCAbUkYUko7vTn",
-                URL:"http://open.mapquestapi.com",
-                Locations:{},
-                geocode:function geocode(location) {
-                    //Geocode() returns a promise from angular $http.
-                    var mapquest=this;
-                    $http.get([this.URL,"geocode","v1","address"].join("/"),
-                              {key:this.KEY,location:encodeURIComponent(location)})
-                    .success(function (data,status,headers,config) {
-                        console.debug(data)
-
-                    })
-                    .error(function (data,status,headers,config) {
-                        console.debug(data)
-
-                    });
-                }
-            };
-
-
-            function GithubRepo(reponame) {
-                this.reponame=reponame;
-                Object.defineProperty(this,"processcommits",{value:function processcommits(data,status,headers,config) {
-                    var url=null;
-                    var github=this;
-                    if(data instanceof Array) {
-
-                    }
-                    if (headers instanceof Function) {
-                        headers=headers();
-
-                        //var next=headers.link.match(/<(.+?)>;\W*rel="next"/);
-                        var last=headers.link.match(/<(.+?)>;\W*rel="last"/);
-                        var prev=headers.link.match(/<(.+?)>;\W*rel="prev"/);
-
-                        if(prev!=null) {
-                            //at last page or some page in middle
-                            url=prev[1];
-
-                        } else {
-                            //no more pages to load, leave url null
-                            url=last[1]
-                        }
-                    } else {
-                        url=[this.URL,"repos",this.reponame,"commits"].join("/");
-                    }
-
-                    function process(data) {
-
-
-                        for(var i=data.length-1;i>=0;i--) {
-                            console.debug(data[i].commit.author.date);
-                        }
-                    }
-                    if(url!=null) {
-
-                        $http.get(url).success(function (data,status,headers,config) {
-                            console.debug(headers())
-                            github.processcommits(data,status,headers,config);
-                            process(data)
-
-                        }).error(function (data,status,headers,config) {
-
-
-                        });
-                    }
-
-                }});
-            }
-            var GITHUB={
-                URL:"https://api.github.com",
-                client_id:"323583cb8f0f37957b7d",
-                client_secret:"4eaa3b18a179fe0bcc4fe6f78358f3c7bd0c979e",
-                Users:{},
-                Repos:{},
-                reponame:"",
-                user:function user(username) {
-                    //commits takes repo in form owner/reponame
-                    var github=this;
-                    $http.get([this.URL,"users",username].join("/"))
-                    .success(function (data,status,headers,config) {
-                        console.debug(data);
-
-                    })
-                    .error(function (data,status,headers,config) {
-                        console.debug(data);
-                        console.debug(headers());
-
-                    });
-                },
-
-                commits:function commits(repo) {
-                    //commits takes repo in form owner/reponame
-                    var github=this;
-                    this.reponame=repo;
-                    if(repo in this.Repos) {
-
-                    } else {
-                        var Repo=this.Repos[repo]=new GithubRepo(repo);
-                    }
-
-                    var last=headers.link.match(/<(.+?)>;\W*rel="last"/);
-
-
-                    this.processcommits();
-
-                },
-
-                auth:function auth(code) {
-                    if(code) {
-                        $http.post("https://github.com/login/oauth/access_token",
-                                   {client_id:GITHUB.client_id,code:code,client_secret:GITHUB.client_secret})
-                        .success(function (data,status,headers,config) {
-                            console.debug({authdata:data});
-                            console.debug({authheaders:headers});
-                        }).error(function (data,status,headers,config) {
-                            console.debug({authdata:data});
-                            console.debug({authheaders:headers});
-                        });
-                    } else {
-                        window.location="https://github.com/login/oauth/authorize?client_id="+GITHUB.client_id+
-                            "&redirect_uri="+homeurl;
-                    }
-
-                }
-
-            }
-            $scope.auth=GITHUB.auth;
-            if(params["code"]) {
-                GITHUB.auth(params["code"]);
-                document.getElementById("authmodal").style.display="none"
-            }
-            $scope.load=function load(projectname) {
-                if(projectname!=undefined) $scope.projectname=projectname
-
-                GITHUB.commits($scope.projectname);
-            };
-        });
-
-
-    </script>
 </html>
