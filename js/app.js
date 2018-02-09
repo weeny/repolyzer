@@ -56,43 +56,48 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
     var repo=GITHUB.Repos[activerepo];
     repo.stepbackward();
 
-    console.debug(repo.commits[repo.cursor]);
   }
   $scope.next=function next() {
     var repo=GITHUB.Repos[activerepo];
 
     repo.stepforward();
-
-    console.debug(repo.commits[repo.cursor]);
   }
+  $scope.commit={sha:""};
   $scope.load=function load(repo) {
     if(repo!=undefined) $scope.projectname=repo;
     else repo=$scope.projectname;
     var Repo=null;
     activerepo=repo;
     var reponames=Object.keys(GITHUB.Repos)
+    for(var i=0;i<reponames.length;i++) {
+      GITHUB.Repos[reponames[i]].element.setAttribute("class","repo hidden");
+      GITHUB.Repos[reponames[i]].timeline.setAttribute("class","timeline hidden");
+
+    }
+
     if(repo in GITHUB.Repos) {
-      for(var i=0;i<reponames.length;i++) {
-        GITHUB.Repos[reponames[i]].element.setAttribute("class","repo hidden");
-      }
 
       Repo=GITHUB.Repos[repo];
       Repo.element.setAttribute("class","repo");
+      Repo.timeline.setAttribute("class","timeline");
+      Repo.update();
+
     } else {
       Repo=GITHUB.Repos[repo]=new GithubRepo(repo,this.access_token,this.URL);
       Repo.element=document.createElement("div");
       Repo.element.setAttribute("class","repo");
       Repo.timeline=document.createElement("div");
       Repo.timeline.setAttribute("class", "timeline");
-      Repo.element.appendChild(Repo.timeline);
 
       document.getElementById("workspace").appendChild(Repo.element);
+      Repo.element.parentNode.parentNode.appendChild(Repo.timeline);
 
       // add hooks to place and update elements
 
       //hook for before update to clear status classes and set age
       Repo.update=function update() {
-        console.debug({"updating:":this.Files});
+        $scope.commit.sha=Repo.shas[Repo.cursor];
+
         var filenames=Object.keys(this.Files);
         for(var j=0;j<filenames.length;j++) {
           var filename=filenames[j];
@@ -132,32 +137,35 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         usr.innerHTML=data.author.login + "("+data.commit.author.date+")";
         commit.appendChild(usr);
         commit.appendChild(msg);
-        commit.timestamp=data.commit.author.date;
-        console.debug({commit:data});
+        commit.timestamp=data.timestamp;
         var placed=false;
+        this.timeline.appendChild(commit)//,this.timeline.firstChild);
+
         for(var i=0;i<this.timeline.children.length;i++) {
+          console.debug("comparing "+commit.timestamp+" before "+this.timeline.children[i].timestamp);
 
           if(commit.timestamp<=this.timeline.children[i].timestamp) {
             placed=true;
             this.timeline.insertBefore(commit,this.timeline.children[i]);
+            break;
           }
         }
         if(!placed)
-          this.timeline.appendChild(commit)//,this.timeline.firstChild);
-
-        //this.timeline.appendChild(commit);
+          this.timeline.appendChild(commit);
 
         return commit;
       }
       Repo.addFile=function addFile(file) {
         if(file.size<300)
+          if(file.size!==undefined)
           file.style.height=(file.size)+"px";
-        else
+        else if(file.size!==undefined)
           file.style.height="300px";
 
         file.style.transform="translate3d(0,0,0)";
 
         file.setAttribute("class","file new");
+        if(file.size!==undefined)
         file.filesize.innerHTML=file.size;
         file.exists=true;
       };
@@ -182,16 +190,10 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         file.appendChild(file.filesize);
         file.filesize.setAttribute("class","filesize");
         file.filename.innerHTML=f.filename;
-        file.filecount=document.createElement("span");
-        file.appendChild(file.filecount);
-        file.filecount.setAttribute("class","filesize");
-        file.filecount.style.left="100%";
-
-
-        return file;
+         return file;
       }
       Repo.updateFile=function updateFile(file,f) {
-        file.filecount.innerHTML=f.count;
+        //file.filecount.innerHTML=f.count;
 
         file.age=0;
         // file.remove();
@@ -199,10 +201,11 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         //// Repo.element.insertBefore(file,Repo.element.firstChild);
         // file.style.width=(file.size)+"px"
         if(file.size<300) {
+
           file.style.height=(file.size)+"px";
         }
         else {
-
+          if(file.size!==undefined)
           file.style.height=300+"px";
 
         }
@@ -216,13 +219,15 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
           file.setAttribute("class","file updated")
           file.exists=true;
         }
-        file.filesize.innerHTML=file.size;
+        if(file.size!==undefined)
+          file.filesize.innerHTML=file.size+"~"+f.changes;
         //file.style.padding=(20+(file.size/20))+"px"
       }
+
+      Repo.processcommits();
+
     }
 
-
-    Repo.processcommits();
 
   };
 });

@@ -81,6 +81,7 @@ main.service('Github', function($http,$timeout) {
       this.cursor++;
       var githubrepo=this;
       var data=this.commits[this.cursor];
+
       //apply current commit
       var filenames=Object.keys(this.Files);
       for(var i=0;i<filenames.length;i++) {
@@ -98,6 +99,7 @@ main.service('Github', function($http,$timeout) {
           var F=githubrepo.Files[f.filename];
           if(f.status=="added") {
             githubrepo.addFile(F);
+            if(f.size)
             F.size=f.size;
             F.prevage=F.age;
             F.age=0;
@@ -105,6 +107,7 @@ main.service('Github', function($http,$timeout) {
           } else if (f.status=="modified") {
 
             //      F.size=F.size+f.additions-f.deletions;
+            if(f.size)
             F.size=f.size;
             F.prevage=F.age;
             F.age=0;

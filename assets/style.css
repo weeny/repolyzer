@@ -37,6 +37,7 @@ body { margin:0;padding:0;overflow:hidden;
 .commit.active {
   border:2px solid red;
 }
+.timeline.hidden { display:none; }
 .timeline {
     position: fixed;
     bottom: 0;
@@ -81,8 +82,7 @@ button, input[type="submit"] {
     top: 0;
     left: 0;
 }
-.repo {transition:opacity:0.5s;opacity:1}
-.repo.hidden { opacity:0;pointer-events:none;transition:opacity 0.5s; }
+.repo.hidden { display:none;pointer-events:none;transition:opacity 0.5s; }
 
 .file {
   background-color:rgba(255,255,255,0.5);

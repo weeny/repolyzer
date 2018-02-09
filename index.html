@@ -35,12 +35,18 @@
                 <input type="text" name="projectname" placeholder="owner/reponame" ng-model="projectname">
 
                 <button name="Load" ng-click="load()">Load</button>
-                <button name="Squishy" ng-click="load('weeny/repolyzer')">Repolyzer</button>
-                <button name="Repolyzer" ng-click="load('fluffhub/squishy')">Squishy</button>
 
+
+
+                <caption for="Repolyzer">&nbsp;Analyze this repo:</caption>
+                 <button name="Repolyzer" ng-click="load('weeny/repolyzer')">Repolyzer</button>
+
+
+            </div>
+            <div id="controls2">
+                <caption>{{ commit.sha }}</caption>
                 <button name="prev" ng-click="prev()">&lt;</button>
                 <button name="next" ng-click="next()">&gt;</button>
-
             </div>
             <div id="workspace">
 
