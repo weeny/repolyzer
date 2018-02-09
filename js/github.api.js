@@ -322,7 +322,7 @@ main.service('Github', function($http,$timeout) {
         /* this is a github querk.  Github api returns next=2 / last=1 when new page iminent.
         */
         var test=headers.link.match(/(\d+)>;\W*?rel="next".+?(\d+)>;\W*?rel="last"/)
-        if(test[1]>test[2]) {
+        if(test!=null&&test[1]>test[2]) {
           githubrepo.page=1;
           url=null;
         } else {
