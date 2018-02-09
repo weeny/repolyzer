@@ -6,7 +6,26 @@ body { margin:0;padding:0;overflow:hidden;
 * { font-family:monospace }
 #workspace { perspective:10px;perspective-origin:50% 00%;
   overflow:scroll;position:absolute;top:4em;left:0;right:0;bottom:0; }
-
+.commit {
+    display: inline-block;
+    position: relative;
+    height: 100%;
+    width: auto;
+    padding: 0 3em;
+    line-height: 1.25em;
+}
+.timeline {
+    position: fixed;
+    bottom: 0;
+    height: 6em;
+    width: 100%;
+    overflow-x: scroll;
+    white-space: nowrap;
+  border-top:3px solid rgba(100,100,100);
+  background-color:white;
+  z-index:100000;
+}
+span.usr { display:block;line-height:2em;height:2em; }
 button, input[type="submit"] {
   padding: 0.3em 1em;
   line-height: 1.6em;

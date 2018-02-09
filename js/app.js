@@ -82,6 +82,10 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
       Repo=GITHUB.Repos[repo]=new GithubRepo(repo,this.access_token,this.URL);
       Repo.element=document.createElement("div");
       Repo.element.setAttribute("class","repo");
+      Repo.timeline=document.createElement("div");
+      Repo.timeline.setAttribute("class", "timeline");
+      Repo.element.appendChild(Repo.timeline);
+
       document.getElementById("workspace").appendChild(Repo.element);
 
       // add hooks to place and update elements
@@ -100,11 +104,25 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
           if(file.count===undefined||file.count==0) file.count=1;
           var agerate=file.age*100.0/file.maxcount;
           file.style.transform="translate3d(0,"+agerate+"px,-"+(file.age/2.0/file.maxcount)+"px)";
-     //     file.style.margin="0 "+(file.age/5.0)+"%";
+          //     file.style.margin="0 "+(file.age/5.0)+"%";
         }
       }
+      Repo.addCommit=function addCommit(data) {
+        /* I forgot how to use AngularJS' template system so you are treated to native JS. */
+        var commit=document.createElement("div");
+        commit.setAttribute("class","commit");
+        var msg=document.createElement("span");
+        msg.setAttribute("class","msg");
+        msg.innerHTML=data.commit.message;
+        var usr=document.createElement("span");
+        usr.setAttribute("class","usr");
+        usr.innerHTML=data.author.login;
+        commit.appendChild(usr);
+        commit.appendChild(msg);
+        console.debug({commit:data});
+        this.timeline.appendChild(commit);
+      }
       Repo.addFile=function addFile(file) {
-        // file.style.width=(file.size)+"px"
         if(file.size<300)
           file.style.height=(file.size)+"px";
         else
@@ -121,7 +139,8 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         file.exists=false;
       };
       Repo.newFile=function newFile(f) {
-        console.debug({adding:f});
+        /* I forgot how to use AngularJS' template system so you are treated to native JS. */
+
         var filenames=Object.keys(this.Files);
         var F,file;
 
