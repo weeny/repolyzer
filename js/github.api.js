@@ -100,7 +100,7 @@ main.service('Github', function($http,$timeout) {
           if(f.status=="added") {
             githubrepo.addFile(F);
             if(f.size)
-            F.size=f.size;
+              F.size=f.size;
             F.prevage=F.age;
             F.age=0;
             F.exists=true;
@@ -108,7 +108,7 @@ main.service('Github', function($http,$timeout) {
 
             //      F.size=F.size+f.additions-f.deletions;
             if(f.size)
-            F.size=f.size;
+              F.size=f.size;
             F.prevage=F.age;
             F.age=0;
             F.exists=true;
@@ -281,7 +281,8 @@ main.service('Github', function($http,$timeout) {
           if(timestamp<ts) {
             githubrepo.commits.splice(i,0,data);
             githubrepo.timestamps.splice(i,0,timestamp);
-              githubrepo.shas.splice(i,0,sha);
+            githubrepo.shas.splice(i,0,sha);
+
             placed=true;break;
           }
         }

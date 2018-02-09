@@ -62,7 +62,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
 
     repo.stepforward();
   }
-  $scope.commit={sha:""};
+  $scope.commit={sha:"",url:""};
   $scope.load=function load(repo) {
     if(repo!=undefined) $scope.projectname=repo;
     else repo=$scope.projectname;
@@ -97,6 +97,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
       //hook for before update to clear status classes and set age
       Repo.update=function update() {
         $scope.commit.sha=Repo.shas[Repo.cursor];
+                $scope.commit.url=Repo.commits[Repo.cursor].commit.url;
 
         var filenames=Object.keys(this.Files);
         for(var j=0;j<filenames.length;j++) {
@@ -139,10 +140,10 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         commit.appendChild(msg);
         commit.timestamp=data.timestamp;
         var placed=false;
+        var repo=this;
         this.timeline.appendChild(commit)//,this.timeline.firstChild);
 
         for(var i=0;i<this.timeline.children.length;i++) {
-          console.debug("comparing "+commit.timestamp+" before "+this.timeline.children[i].timestamp);
 
           if(commit.timestamp<=this.timeline.children[i].timestamp) {
             placed=true;
@@ -152,7 +153,24 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         }
         if(!placed)
           this.timeline.appendChild(commit);
+        commit.addEventListener("click",function(e) {
 
+          for(var i=0;i<repo.shas.length;i++) {
+             if(commit.sha==repo.shas[i]) break;
+          }
+          console.debug(commit.sha+" "+repo.shas.length + " "+i);
+          var steps=i-repo.cursor;
+          if(steps>0) {
+            for(var j=0;j<steps;j++) {
+              repo.stepforward();
+            }
+          }else if(steps<0) {
+
+            for (var j=steps;j<0;j++) {
+              repo.stepbackward();
+            }
+          }
+        });
         return commit;
       }
       Repo.addFile=function addFile(file) {
@@ -190,7 +208,9 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         file.appendChild(file.filesize);
         file.filesize.setAttribute("class","filesize");
         file.filename.innerHTML=f.filename;
+
          return file;
+
       }
       Repo.updateFile=function updateFile(file,f) {
         //file.filecount.innerHTML=f.count;

@@ -44,9 +44,11 @@
 
             </div>
             <div id="controls2">
-                <caption>{{ commit.sha }}</caption>
+                <caption><a href="{{ commit.url }}" target="_blank">{{ commit.sha }}</a></caption>
+                <button name="prev" ng-click="first()">&lt;&lt;</button>
                 <button name="prev" ng-click="prev()">&lt;</button>
                 <button name="next" ng-click="next()">&gt;</button>
+                 <button name="last" ng-click="last()">&gt;&gt;</button>
             </div>
             <div id="workspace">
 
