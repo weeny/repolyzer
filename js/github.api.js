@@ -8,21 +8,6 @@ main.service('Github', function($http,$timeout) {
     Repos:{}
   };
 
-  /*  user:function user(username) {
-    //commits takes repo in form owner/reponame
-    var github=this;
-    $http.get([this.URL,"users",username].join("/"))
-    .success(function (data,status,headers,config) {
-      console.debug(data);
-
-    })
-    .error(function (data,status,headers,config) {
-      console.debug(data);
-      console.debug(headers());
-
-    });
-  },
-*/
 
   /*
   Githubrepo has the following hooks:
@@ -59,7 +44,7 @@ main.service('Github', function($http,$timeout) {
   GithubRepo.prototype.shas=[];
   GithubRepo.prototype.cursor=-1;
   GithubRepo.prototype.page=null;
-  GithubRepo.prototype.CURCOMMIT=0;
+
   var odp=Object.defineProperty;
   GithubRepo.def=function(name,value) {
     odp(GithubRepo.prototype,name,value);
@@ -116,17 +101,9 @@ main.service('Github', function($http,$timeout) {
             F.exists=false;
           }
 
-          githubrepo.updateFile(F,f);
+          githubrepo.updateFile(F,f,data.html_url);
 
         }
-        // },100);
-        /*else {
-          var F=this.addFile(f);
-          F.size=f.additions;
-          F.count=1;
-          F.exists=true;
-          this.Files[f.filename]=F;
-        }*/
       }
     }
 
@@ -167,41 +144,9 @@ main.service('Github', function($http,$timeout) {
           }
         }
       }
-      //      if(this.cursor>0) {
       this.cursor-=2;
 
       this.stepforward();
-      //    } else {
-      //      this.cursor--;
-      //      this.update();
-      //    }
-      /*
-      var data=this.commits[this.cursor];
-            for(var i=0;i<data.files.length;i++) {
-        var f=data.files[i];
-
-
-        if(f.filename in this.Files) {
-          var F=this.Files[f.filename];
-          F.size-=f.additions;
-          F.size+=f.deletions;
-          F.count--;
-
-          if(f.status=="deleted"||f.status=="removed") {
-            F.age=0;
-            this.dropFile(f);
-            F.exists=false;
-          }
-          else if(f.status=="added") {
-            this.addFile(f);
-            F.exists=true;
-          } else {
-            this.updateFile(F,f);
-          }
-
-        }
-      }
-      */
     }
 
   }});
@@ -214,7 +159,6 @@ main.service('Github', function($http,$timeout) {
 
       var url=[CONFIG.URL,"repos",githubrepo.reponame,"commits",sha].join("/")
       url+="?r="+Math.random(10000);
-      var TARGETPOS=githubrepo.CURCOMMIT
 
       $http.get(url,{headers:{"Authorization":"token "+CONFIG.access_token}})
       .success(function (data,status,headers,config) {
@@ -276,8 +220,6 @@ main.service('Github', function($http,$timeout) {
         var placed=false;
         for(var i=0;i<githubrepo.timestamps.length;i++) {
           var ts = githubrepo.timestamps[i];
-          console.debug(ts);
-          console.debug(commitdata.timestamp);
           if(timestamp<ts) {
             githubrepo.commits.splice(i,0,data);
             githubrepo.timestamps.splice(i,0,timestamp);
@@ -294,15 +236,7 @@ main.service('Github', function($http,$timeout) {
         }
 
         githubrepo.stepforward();
-        /*
-        githubrepo.commits[TARGETPOS]=data;
-        githubrepo.timestamps[TARGETPOS]=commitdata.author.date;
-        githubrepo.shas[TARGETPOS]=sha;
-        */
 
-
-
-        //console.debug({time:commitdata.author.date,file:data.files})
       }).error(function(data,status,headers,config) {
       });
     }
@@ -337,8 +271,7 @@ main.service('Github', function($http,$timeout) {
             if(githubrepo.page==null) {
               //at first page, go to last page
               var last=headers.link.match(/^.*<(.+?)>;\W*?rel="last"/);
-              console.debug({"jammed up at": headers});
-              githubrepo.page=0;
+               githubrepo.page=0;
               if(last!=null) {
                 url=last[1];
               } else {
@@ -375,9 +308,6 @@ main.service('Github', function($http,$timeout) {
           //console.debug({id:githubrepo.cursor,date:data[i].commit.author.date,data:data[i]});
 
           githubrepo.processcommit(data[i]);
-
-          githubrepo.CURCOMMIT++;
-
 
         }
       }

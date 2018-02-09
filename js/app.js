@@ -166,7 +166,6 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
           for(var i=0;i<repo.shas.length;i++) {
             if(commit.sha==repo.shas[i]) break;
           }
-          console.debug(commit.sha+" "+repo.shas.length + " "+i);
           var steps=i-repo.cursor;
           if(steps>0) {
             for(var j=0;j<steps;j++) {
@@ -205,12 +204,14 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         var filenames=Object.keys(this.Files);
         var F,file;
 
-        F=file;
+
         file=document.createElement("div");
 
         this.element.appendChild(file);
-        file.filename=document.createElement("span");
+        file.filename=document.createElement("a");
         file.appendChild(file.filename);
+
+        file.filename.setAttribute("target","_blank");
         file.filename.setAttribute("class","filename");
         file.filesize=document.createElement("span");
         file.appendChild(file.filesize);
@@ -220,14 +221,9 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         return file;
 
       }
-      Repo.updateFile=function updateFile(file,f) {
-        //file.filecount.innerHTML=f.count;
-
+      Repo.updateFile=function updateFile(file,f,url) {
         file.age=0;
-        // file.remove();
         file.style.transform="translate3d(0,0,0)";
-        //// Repo.element.insertBefore(file,Repo.element.firstChild);
-        // file.style.width=(file.size)+"px"
         if(file.size<300) {
 
           file.style.height=(file.size)+"px";
@@ -237,7 +233,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
             file.style.height=300+"px";
 
         }
-        if(f.status=="deleted"||f.status=="removed") {
+                    if(f.status=="deleted"||f.status=="removed") {
           file.setAttribute("class","file deleted");
           file.exists=false;
         } else if(f.status=="added") {
@@ -249,7 +245,10 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         }
         if(file.size!==undefined)
           file.filesize.innerHTML=file.size+"~"+f.changes;
-        //file.style.padding=(20+(file.size/20))+"px"
+
+        if(url!=null)
+                file.filename.href=url;
+
       }
 
       Repo.processcommits();
