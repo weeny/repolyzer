@@ -5,7 +5,7 @@ var main=angular.module("repolyzer",[]);
 
 
 
-main.controller("main",function($scope,$http,$templateCache,$compile,Github) {
+main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Github) {
   var params={};
   var cookies={};
   var GITHUB=Github.CONFIG;
@@ -53,10 +53,17 @@ main.controller("main",function($scope,$http,$templateCache,$compile,Github) {
   }
 
   $scope.prev=function prev() {
-    GITHUB.Repos[activerepo].stepBackward();
+    var repo=GITHUB.Repos[activerepo];
+    repo.stepbackward();
+
+    console.debug(repo.commits[repo.cursor]);
   }
   $scope.next=function next() {
-    GITHUB.Repos[activerepo].stepForward();
+    var repo=GITHUB.Repos[activerepo];
+
+    repo.stepforward();
+
+    console.debug(repo.commits[repo.cursor]);
   }
   $scope.load=function load(repo) {
     if(repo!=undefined) $scope.projectname=repo;
@@ -80,44 +87,90 @@ main.controller("main",function($scope,$http,$templateCache,$compile,Github) {
       // add hooks to place and update elements
 
       //hook for before update to clear status classes and set age
-      Repo.update=function() {
+      Repo.update=function(direction) {
+        if(direction!==undefined) direction=1;
         console.debug({"updating:":this.Files});
         var filenames=Object.keys(this.Files);
         for(var j=0;j<filenames.length;j++) {
           var filename=filenames[j];
           var file=this.Files[filename];
+
           file.setAttribute("class","file")
-          file.style.transform="translate3d(0,-"+(file.age/2.0)+"px,-"+file.age+"px)";
-         // file.style.margin=file.age+"em"
+          if(file.exists===false) file.setAttribute("class","file deleted");
+          if(file.count===undefined||file.count==0) file.count=1;
+          var agerate=file.age*100.0/file.maxcount;
+          file.style.transform="translate3d(0,"+agerate+"px,-"+(file.age/2.0/file.maxcount)+"px)";
+     //     file.style.margin="0 "+(file.age/5.0)+"%";
         }
       }
-      Repo.addFile=function addFile(f) {
-        console.debug({adding:f});
-        var file=document.createElement("div");
-
-        file.innerHTML=f.filename;
-        file.setAttribute("class","file new");
-        this.element.appendChild(file);
-        file.style.padding=(20+(f.size/20))+"px"
+      Repo.addFile=function addFile(file) {
+        // file.style.width=(file.size)+"px"
+        if(file.size<300)
+          file.style.height=(file.size)+"px";
+        else
+          file.style.height="300px";
 
         file.style.transform="translate3d(0,0,0)";
+
+        file.setAttribute("class","file new");
+        file.filesize.innerHTML=file.size;
+        file.exists=true;
+      };
+      Repo.dropFile=function dropFile(file) {
+        file.setAttribute("class","file deleted");
+        file.exists=false;
+      };
+      Repo.newFile=function newFile(f) {
+        console.debug({adding:f});
+        var filenames=Object.keys(this.Files);
+        var F,file;
+
+        F=file;
+        file=document.createElement("div");
+
+        this.element.appendChild(file);
+        file.filename=document.createElement("span");
+        file.appendChild(file.filename);
+        file.filename.setAttribute("class","filename");
+        file.filesize=document.createElement("span");
+        file.appendChild(file.filesize);
+        file.filesize.setAttribute("class","filesize");
+        file.filename.innerHTML=f.filename;
+        file.filecount=document.createElement("span");
+        file.appendChild(file.filecount);
+        file.filecount.setAttribute("class","filesize");
+        file.filecount.style.left="100%";
+
+
         return file;
       }
       Repo.updateFile=function updateFile(file,f) {
+        file.filecount.innerHTML=f.count;
 
         file.age=0;
-       // file.remove();
+        // file.remove();
         file.style.transform="translate3d(0,0,0)";
-       //// Repo.element.insertBefore(file,Repo.element.firstChild);
-        file.style.width=(f.size)+"px"
-        file.style.height=(f.size*0.5)+"px"
+        //// Repo.element.insertBefore(file,Repo.element.firstChild);
+        // file.style.width=(file.size)+"px"
+        if(file.size<300) {
+          file.style.height=(file.size)+"px";
+        }
+        else {
+
+          file.style.height=300+"px";
+
+        }
         if(f.status=="deleted"||f.status=="removed") {
           file.setAttribute("class","file deleted");
+          file.exists=false;
         } else if(f.status=="added") {
           file.setAttribute("class","file new");
+          file.exists=true;
         } else {
           file.setAttribute("class","file updated")
+          file.exists=true;
         }
+        file.filesize.innerHTML=file.size;
         //file.style.padding=(20+(file.size/20))+"px"
       }
     }
