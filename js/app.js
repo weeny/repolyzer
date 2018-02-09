@@ -91,8 +91,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
       // add hooks to place and update elements
 
       //hook for before update to clear status classes and set age
-      Repo.update=function(direction) {
-        if(direction!==undefined) direction=1;
+      Repo.update=function update() {
         console.debug({"updating:":this.Files});
         var filenames=Object.keys(this.Files);
         for(var j=0;j<filenames.length;j++) {
@@ -106,6 +105,20 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
           file.style.transform="translate3d(0,"+agerate+"px,-"+(file.age/2.0/file.maxcount)+"px)";
           //     file.style.margin="0 "+(file.age/5.0)+"%";
         }
+        for (var i=0;i<this.commits.length;i++) {
+          var C=this.commits[i].Commit;
+          if(i==this.cursor) {
+            if(C.previousSibling!=null)
+              C.parentElement.scrollLeft=C.offsetLeft-C.previousSibling.offsetWidth;
+            else
+              C.parentElement.scrollLeft=C.offsetLeft;
+            C.setAttribute("class","commit active");
+          } else {
+            C.setAttribute("class","commit");
+          }
+        }
+
+
       }
       Repo.addCommit=function addCommit(data) {
         /* I forgot how to use AngularJS' template system so you are treated to native JS. */
@@ -121,6 +134,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         commit.appendChild(msg);
         console.debug({commit:data});
         this.timeline.appendChild(commit);
+        return commit;
       }
       Repo.addFile=function addFile(file) {
         if(file.size<300)

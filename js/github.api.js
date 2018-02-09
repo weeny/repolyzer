@@ -78,7 +78,7 @@ main.service('Github', function($http,$timeout) {
   GithubRepo.def("stepforward",{value:function(update) {
     if(this.cursor<this.commits.length-1) {
       this.cursor++;
-
+      var githubrepo=this;
       var data=this.commits[this.cursor];
       //apply current commit
       var filenames=Object.keys(this.Files);
@@ -92,11 +92,11 @@ main.service('Github', function($http,$timeout) {
       for(var i=0;i<data.files.length;i++) {
         var f=data.files[i];
 
-        $timeout(function() {
-        if(f.filename in this.Files) {
-          var F=this.Files[f.filename];
+        //   $timeout(function() {
+        if(f.filename in githubrepo.Files) {
+          var F=githubrepo.Files[f.filename];
           if(f.status=="added") {
-            this.addFile(F);
+            githubrepo.addFile(F);
             F.size=f.size;
             F.prevage=F.age;
             F.age=0;
@@ -112,10 +112,11 @@ main.service('Github', function($http,$timeout) {
             F.exists=false;
           }
 
-          this.updateFile(F,f);
+          githubrepo.updateFile(F,f);
 
         }
-        },100);/*else {
+        // },100);
+        /*else {
           var F=this.addFile(f);
           F.size=f.additions;
           F.count=1;
@@ -128,6 +129,7 @@ main.service('Github', function($http,$timeout) {
   }});
   GithubRepo.def("stepbackward",{value:function() {
     //undo current commit
+    var githubrepo=this;
     if(this.cursor>0) {
       //apply current commit
       //de-age all files
@@ -144,10 +146,8 @@ main.service('Github', function($http,$timeout) {
 
         for(var i=0;i<data.files.length;i++) {
           var f=data.files[i];
-          $timeout(function() {
-
-          if(f.filename in this.Files) {
-            var F=this.Files[f.filename];
+          if(f.filename in githubrepo.Files) {
+            var F=githubrepo.Files[f.filename];
             // F.size=F.size-f.additions+f.deletions;
             F.size=f.size;
             F.count=f.count;
@@ -161,11 +161,16 @@ main.service('Github', function($http,$timeout) {
             }
 
           }
-          },100);
         }
       }
-      this.cursor-=2;
-      this.stepforward();
+//      if(this.cursor>0) {
+        this.cursor-=2;
+
+        this.stepforward();
+  //    } else {
+  //      this.cursor--;
+  //      this.update();
+  //    }
       /*
       var data=this.commits[this.cursor];
             for(var i=0;i<data.files.length;i++) {
@@ -251,8 +256,9 @@ main.service('Github', function($http,$timeout) {
         githubrepo.commits.push(data);
         githubrepo.timestamps.push(commitdata.author.date);
         githubrepo.shas.push(sha);
-        githubrepo.addCommit(data);
 
+        data.Commit=githubrepo.addCommit(data);
+        data.Commit.Id=githubrepo.commits.length-1;
 
         githubrepo.stepforward();
         //console.debug({time:commitdata.author.date,file:data.files})
@@ -305,9 +311,8 @@ main.service('Github', function($http,$timeout) {
       console.debug({trying:url})
       $http.get(url,{headers:{"Authorization":"token "+CONFIG.access_token}})
       .success(function (data,status,headers,config) {
-        $timeout(function() {
-          githubrepo.processcommits(data,status,headers,config);
-        },250);
+        githubrepo.processcommits(data,status,headers,config);
+
       }).error(function (data,status,headers,config) {
       });
     }

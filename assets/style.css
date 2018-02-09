@@ -9,10 +9,20 @@ body { margin:0;padding:0;overflow:hidden;
 .commit {
     display: inline-block;
     position: relative;
-    height: 100%;
+    /* height: 100%; */
     width: auto;
     padding: 0 3em;
-    line-height: 1.25em;
+    line-height: 2em;
+    /* margin-bottom: 1em; */
+}
+.commit:last-child {
+    margin-right: 50%;
+}
+.commit:first-child {
+    margin-left: 50%;
+}
+.commit.active {
+  border:2px solid red;
 }
 .timeline {
     position: fixed;
