@@ -70,84 +70,129 @@ main.service('Github', function($http) {
   GithubRepo.def("update",{value:function(){},writable:true});
   GithubRepo.def("addFile",{value:function(){},writable:true});
   GithubRepo.def("dropFile",{value:function(){},writable:true});
+  GithubRepo.def("newFile",{value:function(){},writable:true});
+
   GithubRepo.def("updateFile",{value:function(){},writable:true});
   GithubRepo.def("addCommit",{value:function(){},writable:true});
 
-  GithubRepo.def("stepforward",{value:function() {
-    this.cursor++;
-    this.update();
-    var data=this.commits[this.cursor];
-    //apply current commit
-    var filenames=Object.keys(this.Files);
-    for(var i=0;i<filenames.length;i++) {
-      var filename=filenames[i];
-      var F=this.Files[filename];
-      if(F.age<50)
+  GithubRepo.def("stepforward",{value:function(update) {
+    if(this.cursor<this.commits.length-1) {
+      this.cursor++;
+
+      var data=this.commits[this.cursor];
+      //apply current commit
+      var filenames=Object.keys(this.Files);
+      for(var i=0;i<filenames.length;i++) {
+        var filename=filenames[i];
+        var F=this.Files[filename];
         F.age++;
-      else
-       F.age=50;
-    }
+      }
+      if(update==undefined)
+        this.update(1);
+      for(var i=0;i<data.files.length;i++) {
+        var f=data.files[i];
 
-    for(var i=0;i<data.files.length;i++) {
-      var f=data.files[i];
 
+        if(f.filename in this.Files) {
+          var F=this.Files[f.filename];
+          if(f.status=="added") {
+            this.addFile(F);
+            F.size=f.size;
+            F.prevage=F.age;
+            F.age=0;
+            F.exists=true;
+          } else if (f.status=="modified") {
 
-      if(f.filename in this.Files) {
-        var F=this.Files[f.filename];
-        f.size+=f.additions;
-        f.size-=f.deletions;
-        f.count++;
-        f.age=0;
-        this.updateFile(this.Files[f.filename],f);
-      } else {
+            //      F.size=F.size+f.additions-f.deletions;
+            F.size=f.size;
+            F.prevage=F.age;
+            F.age=0;
+            F.exists=true;
+          } else {
+            F.exists=false;
+          }
 
-        f.size=f.additions;
-        f.count=1;
-        this.Files[f.filename]=this.addFile(f);
+          this.updateFile(F,f);
+
+        } /*else {
+          var F=this.addFile(f);
+          F.size=f.additions;
+          F.count=1;
+          F.exists=true;
+          this.Files[f.filename]=F;
+        }*/
       }
     }
 
   }});
   GithubRepo.def("stepbackward",{value:function() {
     //undo current commit
-    console.debug("stepping backward?")
-    var data=this.commits[this.cursor];
-    //apply current commit
-    //de-age all files
-    var filenames=Object.keys(this.Files);
-    for(var i=0;i<filenames.length;i++) {
-      var filename=filenames[i];
-      var F=this.Files[filename];
-      if(F.age>0)
-        F.age--;
-      else
-       F.age=0;
-    }
-    for(var i=0;i<data.files.length;i++) {
-      var f=data.files[i];
-
-
-      if(f.filename in this.Files) {
-        var F=this.Files[f.filename];
-        f.size-=f.additions;
-        f.size+=f.deletions;
-        f.count--;
-        if(f.status=="deleted"||f.status=="removed") f.status="added";
-        if(f.status=="added") f.status="deleted";
-
-        this.updateFile(this.Files[f.filename],f);
-      } else {
-
-        f.size=f.additions;
-        f.count=1;
-
-        this.Files[f.filename]=this.addFile(f);
-        this.Files[f.filename].age=0;
+    if(this.cursor>0) {
+      //apply current commit
+      //de-age all files
+      var filenames=Object.keys(this.Files);
+      for(var i=0;i<filenames.length;i++) {
+        var filename=filenames[i];
+        var F=this.Files[filename];
+        F.age++;
       }
+      this.update();
+
+      for(var i=this.cursor;i>this.cursor-1;i--) {
+        var data=this.commits[i];
+
+        for(var i=0;i<data.files.length;i++) {
+          var f=data.files[i];
+
+
+          if(f.filename in this.Files) {
+            var F=this.Files[f.filename];
+            // F.size=F.size-f.additions+f.deletions;
+            F.size=f.size;
+            F.count=f.count;
+
+            if(f.status=="deleted"||f.status=="removed") {
+              F.age=0;
+              this.addFile(F);
+            }
+            else if(f.status=="added") {
+              this.dropFile(F);
+            }
+
+          }
+        }
+      }
+      this.cursor-=2;
+      this.stepforward();
+      /*
+      var data=this.commits[this.cursor];
+            for(var i=0;i<data.files.length;i++) {
+        var f=data.files[i];
+
+
+        if(f.filename in this.Files) {
+          var F=this.Files[f.filename];
+          F.size-=f.additions;
+          F.size+=f.deletions;
+          F.count--;
+
+          if(f.status=="deleted"||f.status=="removed") {
+            F.age=0;
+            this.dropFile(f);
+            F.exists=false;
+          }
+          else if(f.status=="added") {
+            this.addFile(f);
+            F.exists=true;
+          } else {
+            this.updateFile(F,f);
+          }
+
+        }
+      }
+      */
     }
 
-    this.cursor--;
-    this.update();
   }});
 
   GithubRepo.def("processcommit",{value:function processcommit(commitdata) {
@@ -155,16 +200,57 @@ main.service('Github', function($http) {
     var sha=commitdata.sha;
     if(!(sha in githubrepo.shas)) {
 
+
       var url=[CONFIG.URL,"repos",githubrepo.reponame,"commits",sha].join("/")
 
       $http.get(url,{headers:{"Authorization":"token "+CONFIG.access_token}})
       .success(function (data,status,headers,config) {
         data.timestamp=commitdata.author.date;
-        data.age=0;
+
+        for(var i=0;i<data.files.length;i++) {
+          var f=data.files[i];
+
+          if(f.filename in githubrepo.Files) {
+            var File=githubrepo.Files[f.filename];
+
+            f.size=File.size;
+            if(f.status=="added") {
+              File.size=f.size=File.size+f.additions-f.deletions;
+
+              File.count=f.count=File.count+1;
+              File.maxcount=File.count;
+
+            } else if (f.status=="modified") {
+              File.count++;
+              f.count=File.count;
+              File.maxcount=File.count;
+
+              File.size=f.size=File.size+f.additions-f.deletions;
+            } else {
+
+              f.exists=false;
+            }
+
+          } else {
+
+            f.age=0;
+            f.size=f.additions;
+            f.exists=true;
+            var File=githubrepo.Files[f.filename]=githubrepo.newFile(f);
+            githubrepo.addFile(File);
+            File.size=f.size;
+            File.count=f.count=1;
+            File.maxcount=File.count;
+          }
+
+
+        }
+
         githubrepo.commits.push(data);
         githubrepo.timestamps.push(commitdata.author.date);
         githubrepo.shas.push(sha);
         githubrepo.addCommit(data);
+
 
         githubrepo.stepforward();
         //console.debug({time:commitdata.author.date,file:data.files})
