@@ -1,4 +1,4 @@
-main.service('Github', function($http) {
+main.service('Github', function($http,$timeout) {
 
   var CONFIG=this.CONFIG={
     URL:"https://api.github.com",
@@ -92,7 +92,7 @@ main.service('Github', function($http) {
       for(var i=0;i<data.files.length;i++) {
         var f=data.files[i];
 
-
+        $timeout(function() {
         if(f.filename in this.Files) {
           var F=this.Files[f.filename];
           if(f.status=="added") {
@@ -114,7 +114,8 @@ main.service('Github', function($http) {
 
           this.updateFile(F,f);
 
-        } /*else {
+        }
+        },100);/*else {
           var F=this.addFile(f);
           F.size=f.additions;
           F.count=1;
@@ -143,7 +144,7 @@ main.service('Github', function($http) {
 
         for(var i=0;i<data.files.length;i++) {
           var f=data.files[i];
-
+          $timeout(function() {
 
           if(f.filename in this.Files) {
             var F=this.Files[f.filename];
@@ -160,6 +161,7 @@ main.service('Github', function($http) {
             }
 
           }
+          },100);
         }
       }
       this.cursor-=2;
@@ -303,7 +305,9 @@ main.service('Github', function($http) {
       console.debug({trying:url})
       $http.get(url,{headers:{"Authorization":"token "+CONFIG.access_token}})
       .success(function (data,status,headers,config) {
-        githubrepo.processcommits(data,status,headers,config);
+        $timeout(function() {
+          githubrepo.processcommits(data,status,headers,config);
+        },250);
       }).error(function (data,status,headers,config) {
       });
     }
