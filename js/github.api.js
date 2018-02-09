@@ -59,6 +59,7 @@ main.service('Github', function($http,$timeout) {
   GithubRepo.prototype.shas=[];
   GithubRepo.prototype.cursor=-1;
   GithubRepo.prototype.page=null;
+  GithubRepo.prototype.CURCOMMIT=0;
   var odp=Object.defineProperty;
   GithubRepo.def=function(name,value) {
     odp(GithubRepo.prototype,name,value);
@@ -163,14 +164,14 @@ main.service('Github', function($http,$timeout) {
           }
         }
       }
-//      if(this.cursor>0) {
-        this.cursor-=2;
+      //      if(this.cursor>0) {
+      this.cursor-=2;
 
-        this.stepforward();
-  //    } else {
-  //      this.cursor--;
-  //      this.update();
-  //    }
+      this.stepforward();
+      //    } else {
+      //      this.cursor--;
+      //      this.update();
+      //    }
       /*
       var data=this.commits[this.cursor];
             for(var i=0;i<data.files.length;i++) {
@@ -205,10 +206,12 @@ main.service('Github', function($http,$timeout) {
   GithubRepo.def("processcommit",{value:function processcommit(commitdata) {
     var githubrepo=this;
     var sha=commitdata.sha;
+    commitdata.author.date=Date.parse(commitdata.author.date);
     if(!(sha in githubrepo.shas)) {
 
-
       var url=[CONFIG.URL,"repos",githubrepo.reponame,"commits",sha].join("/")
+
+      var TARGETPOS=githubrepo.CURCOMMIT
 
       $http.get(url,{headers:{"Authorization":"token "+CONFIG.access_token}})
       .success(function (data,status,headers,config) {
@@ -253,18 +256,49 @@ main.service('Github', function($http,$timeout) {
 
         }
 
-        githubrepo.commits.push(data);
-        githubrepo.timestamps.push(commitdata.author.date);
-        githubrepo.shas.push(sha);
 
-        data.Commit=githubrepo.addCommit(data);
-        data.Commit.Id=githubrepo.commits.length-1;
+        data.Commit=Commit;
+        data.timestamp=commitdata.author.date;
+
+        //   githubrepo.commits.push(data);
+        //   githubrepo.timestamps.push(commitdata.author.date);
+        //   githubrepo.shas.push(sha);
+        var targetindex;
+        var Commit=githubrepo.addCommit(commitdata);
+        Commit.sha=commitdata.sha;
+
+        Commit.date=commitdata.author.date;
+        data.Commit=Commit;
+
+        var placed=false;
+        for(var i=0;i<githubrepo.timestamps.length;i++) {
+          var ts = githubrepo.timestamps[i];
+          if(commitdata.author.date>ts) {
+            githubrepo.commits.splice(i,0,data);
+            githubrepo.timestamps.splice(i,0,commitdata.author.date);
+            githubrepo.shas.splice(i,0,sha);
+            placed=true;
+          }
+        }
+        if(!placed) {
+          githubrepo.commits.push(data);
+          githubrepo.timestamps.push(commitdata.author.date);
+          githubrepo.shas.push(sha);
+        }
+        /*
+        githubrepo.commits[TARGETPOS]=data;
+        githubrepo.timestamps[TARGETPOS]=commitdata.author.date;
+        githubrepo.shas[TARGETPOS]=sha;
+        */
+
 
         githubrepo.stepforward();
+
         //console.debug({time:commitdata.author.date,file:data.files})
       }).error(function(data,status,headers,config) {
       });
     }
+
   }});
   GithubRepo.def("processcommits",{value:function processcommits(data,status,headers,config) {
     var url=null;
@@ -318,9 +352,13 @@ main.service('Github', function($http,$timeout) {
     }
     if(githubrepo.page!=null&&githubrepo.page>0) {
       if(data instanceof Array) {
-        for(var i=data.length-1;i>=0;i--) {
+        for(var i=data.length-1;i>-1;i--) {
           //console.debug({id:githubrepo.cursor,date:data[i].commit.author.date,data:data[i]});
+
           githubrepo.processcommit(data[i]);
+
+          githubrepo.CURCOMMIT++;
+
 
         }
       }

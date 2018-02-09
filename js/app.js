@@ -129,11 +129,24 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         msg.innerHTML=data.commit.message;
         var usr=document.createElement("span");
         usr.setAttribute("class","usr");
-        usr.innerHTML=data.author.login;
+        usr.innerHTML=data.author.login + "("+data.commit.author.date+")";
         commit.appendChild(usr);
         commit.appendChild(msg);
+        commit.timestamp=data.commit.author.date;
         console.debug({commit:data});
-        this.timeline.appendChild(commit);
+        var placed=false;
+        for(var i=0;i<this.timeline.children.length;i++) {
+
+          if(commit.timestamp<=this.timeline.children[i].timestamp) {
+            placed=true;
+            this.timeline.insertBefore(commit,this.timeline.children[i]);
+          }
+        }
+        if(!placed)
+          this.timeline.appendChild(commit)//,this.timeline.firstChild);
+
+        //this.timeline.appendChild(commit);
+
         return commit;
       }
       Repo.addFile=function addFile(file) {
