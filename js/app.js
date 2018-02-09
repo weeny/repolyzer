@@ -233,7 +233,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
             file.style.height=300+"px";
 
         }
-                    if(f.status=="deleted"||f.status=="removed") {
+        if(f.status=="deleted"||f.status=="removed") {
           file.setAttribute("class","file deleted");
           file.exists=false;
         } else if(f.status=="added") {
@@ -247,7 +247,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
           file.filesize.innerHTML=file.size+"~"+f.changes;
 
         if(url!=null)
-                file.filename.href=url;
+          file.filename.href=url;
 
       }
 

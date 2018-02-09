@@ -271,7 +271,7 @@ main.service('Github', function($http,$timeout) {
             if(githubrepo.page==null) {
               //at first page, go to last page
               var last=headers.link.match(/^.*<(.+?)>;\W*?rel="last"/);
-               githubrepo.page=0;
+              githubrepo.page=0;
               if(last!=null) {
                 url=last[1];
               } else {
