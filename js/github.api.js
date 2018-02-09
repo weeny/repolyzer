@@ -78,6 +78,16 @@ main.service('Github', function($http) {
     this.update();
     var data=this.commits[this.cursor];
     //apply current commit
+    var filenames=Object.keys(this.Files);
+    for(var i=0;i<filenames.length;i++) {
+      var filename=filenames[i];
+      var F=this.Files[filename];
+      if(F.age<50)
+        F.age++;
+      else
+       F.age=50;
+    }
+
     for(var i=0;i<data.files.length;i++) {
       var f=data.files[i];
 
@@ -87,6 +97,7 @@ main.service('Github', function($http) {
         f.size+=f.additions;
         f.size-=f.deletions;
         f.count++;
+        f.age=0;
         this.updateFile(this.Files[f.filename],f);
       } else {
 
@@ -99,8 +110,19 @@ main.service('Github', function($http) {
   }});
   GithubRepo.def("stepbackward",{value:function() {
     //undo current commit
+    console.debug("stepping backward?")
     var data=this.commits[this.cursor];
     //apply current commit
+    //de-age all files
+    var filenames=Object.keys(this.Files);
+    for(var i=0;i<filenames.length;i++) {
+      var filename=filenames[i];
+      var F=this.Files[filename];
+      if(F.age>0)
+        F.age--;
+      else
+       F.age=0;
+    }
     for(var i=0;i<data.files.length;i++) {
       var f=data.files[i];
 
@@ -110,16 +132,22 @@ main.service('Github', function($http) {
         f.size-=f.additions;
         f.size+=f.deletions;
         f.count--;
+        if(f.status=="deleted"||f.status=="removed") f.status="added";
+        if(f.status=="added") f.status="deleted";
+
         this.updateFile(this.Files[f.filename],f);
       } else {
 
         f.size=f.additions;
         f.count=1;
+
         this.Files[f.filename]=this.addFile(f);
+        this.Files[f.filename].age=0;
       }
     }
 
     this.cursor--;
+    this.update();
   }});
 
   GithubRepo.def("processcommit",{value:function processcommit(commitdata) {
@@ -132,10 +160,12 @@ main.service('Github', function($http) {
       $http.get(url,{headers:{"Authorization":"token "+CONFIG.access_token}})
       .success(function (data,status,headers,config) {
         data.timestamp=commitdata.author.date;
+        data.age=0;
         githubrepo.commits.push(data);
         githubrepo.timestamps.push(commitdata.author.date);
         githubrepo.shas.push(sha);
         githubrepo.addCommit(data);
+
         githubrepo.stepforward();
         //console.debug({time:commitdata.author.date,file:data.files})
       }).error(function(data,status,headers,config) {

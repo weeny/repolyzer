@@ -10,6 +10,7 @@ main.controller("main",function($scope,$http,$templateCache,$compile,Github) {
   var cookies={};
   var GITHUB=Github.CONFIG;
   var GithubRepo=Github.GithubRepo;
+  var activerepo="";
 
   var access_token=null;
   var modal=angular.element(document.getElementById("authmodal"));
@@ -51,17 +52,25 @@ main.controller("main",function($scope,$http,$templateCache,$compile,Github) {
     window.location="https://github.com/login/oauth/authorize?client_id="+GITHUB.client_id
   }
 
+  $scope.prev=function prev() {
+    GITHUB.Repos[activerepo].stepBackward();
+  }
+  $scope.next=function next() {
+    GITHUB.Repos[activerepo].stepForward();
+  }
   $scope.load=function load(repo) {
     if(repo!=undefined) $scope.projectname=repo;
     else repo=$scope.projectname;
     var Repo=null;
+    activerepo=repo;
+    var reponames=Object.keys(GITHUB.Repos)
     if(repo in GITHUB.Repos) {
-      for(var i=0;i<GITHUB.Repos.length;i++) {
-        GITHUB.Repos[i].element.addClass("hidden");
+      for(var i=0;i<reponames.length;i++) {
+        GITHUB.Repos[reponames[i]].element.setAttribute("class","repo hidden");
       }
 
       Repo=GITHUB.Repos[repo];
-      Repo.element.removeClass("hidden");
+      Repo.element.setAttribute("class","repo");
     } else {
       Repo=GITHUB.Repos[repo]=new GithubRepo(repo,this.access_token,this.URL);
       Repo.element=document.createElement("div");
@@ -78,8 +87,6 @@ main.controller("main",function($scope,$http,$templateCache,$compile,Github) {
           var filename=filenames[j];
           var file=this.Files[filename];
           file.setAttribute("class","file")
-          file.age++;
-
           file.style.transform="translate3d(0,-"+(file.age/2.0)+"px,-"+file.age+"px)";
          // file.style.margin=file.age+"em"
         }
@@ -92,7 +99,6 @@ main.controller("main",function($scope,$http,$templateCache,$compile,Github) {
         file.setAttribute("class","file new");
         this.element.appendChild(file);
         file.style.padding=(20+(f.size/20))+"px"
-        file.age=0;
 
         file.style.transform="translate3d(0,0,0)";
         return file;
@@ -103,8 +109,8 @@ main.controller("main",function($scope,$http,$templateCache,$compile,Github) {
        // file.remove();
         file.style.transform="translate3d(0,0,0)";
        //// Repo.element.insertBefore(file,Repo.element.firstChild);
-        file.style.width=(10*Math.log(f.size))+"px"
-        file.style.height=(7*Math.log(f.size))+"px"
+        file.style.width=(f.size)+"px"
+        file.style.height=(f.size*0.5)+"px"
         if(f.status=="deleted"||f.status=="removed") {
           file.setAttribute("class","file deleted");
         } else if(f.status=="added") {
