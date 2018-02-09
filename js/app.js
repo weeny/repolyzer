@@ -52,6 +52,14 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
     window.location="https://github.com/login/oauth/authorize?client_id="+GITHUB.client_id
   }
 
+  $scope.first=function first() {
+    var repo=GITHUB.Repos[activerepo];
+    while(repo.cursor>0) repo.stepbackward();
+  }
+  $scope.last=function last() {
+    var repo=GITHUB.Repos[activerepo];
+    while(repo.cursor<repo.commits.length-1) repo.stepforward();
+  }
   $scope.prev=function prev() {
     var repo=GITHUB.Repos[activerepo];
     repo.stepbackward();
@@ -97,7 +105,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
       //hook for before update to clear status classes and set age
       Repo.update=function update() {
         $scope.commit.sha=Repo.shas[Repo.cursor];
-                $scope.commit.url=Repo.commits[Repo.cursor].commit.url;
+        $scope.commit.url=Repo.commits[Repo.cursor].commit.url;
 
         var filenames=Object.keys(this.Files);
         for(var j=0;j<filenames.length;j++) {
@@ -156,7 +164,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         commit.addEventListener("click",function(e) {
 
           for(var i=0;i<repo.shas.length;i++) {
-             if(commit.sha==repo.shas[i]) break;
+            if(commit.sha==repo.shas[i]) break;
           }
           console.debug(commit.sha+" "+repo.shas.length + " "+i);
           var steps=i-repo.cursor;
@@ -176,15 +184,15 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
       Repo.addFile=function addFile(file) {
         if(file.size<300)
           if(file.size!==undefined)
-          file.style.height=(file.size)+"px";
-        else if(file.size!==undefined)
-          file.style.height="300px";
+            file.style.height=(file.size)+"px";
+          else if(file.size!==undefined)
+            file.style.height="300px";
 
         file.style.transform="translate3d(0,0,0)";
 
         file.setAttribute("class","file new");
         if(file.size!==undefined)
-        file.filesize.innerHTML=file.size;
+          file.filesize.innerHTML=file.size;
         file.exists=true;
       };
       Repo.dropFile=function dropFile(file) {
@@ -209,7 +217,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         file.filesize.setAttribute("class","filesize");
         file.filename.innerHTML=f.filename;
 
-         return file;
+        return file;
 
       }
       Repo.updateFile=function updateFile(file,f) {
@@ -226,7 +234,7 @@ main.controller("main",function($scope,$http,$templateCache,$timeout,$compile,Gi
         }
         else {
           if(file.size!==undefined)
-          file.style.height=300+"px";
+            file.style.height=300+"px";
 
         }
         if(f.status=="deleted"||f.status=="removed") {
