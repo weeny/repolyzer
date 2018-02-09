@@ -319,25 +319,37 @@ main.service('Github', function($http,$timeout) {
     } else {
       headers=headers();
       if(headers.link) {
-        var prev=headers.link.match(/^.*<(.+?)>;\W*rel="prev"/);
-
-        if(prev!=null) {
-          // at last page or some page in middle
-          githubrepo.page++;
-          url=prev[1];
-
+        /* this is a github querk.  Github api returns next=2 / last=1 when new page iminent.
+        */
+        var test=headers.link.match(/(\d+)>;\W*?rel="next".+?(\d+)>;\W*?rel="last"/)
+        if(test[1]>test[2]) {
+          githubrepo.page=1;
+          url=null;
         } else {
-          if(githubrepo.page==null) {
-            //at first page, go to last page
-            var last=headers.link.match(/^.*<(.+?)>;\W*?rel="last"/);
-            githubrepo.page=0;
-            if(last!=null) {
-              url=last[1];
-            }
+          var prev=headers.link.match(/^.*<(.+?)>;\W*rel="prev"/);
+
+          if(prev!=null) {
+            // at last page or some page in middle
+            githubrepo.page++;
+            url=prev[1];
 
           } else {
-            // no more pages to load, leave url null, finalize callback
-            url=null;
+            if(githubrepo.page==null) {
+              //at first page, go to last page
+              var last=headers.link.match(/^.*<(.+?)>;\W*?rel="last"/);
+              console.debug({"jammed up at": headers});
+              githubrepo.page=0;
+              if(last!=null) {
+                url=last[1];
+              } else {
+                var next=headers.link.match(/^.*<(.+?)>;\W*?rel="next"/);
+                url=next[1];
+              }
+
+            } else {
+              // no more pages to load, leave url null, finalize callback
+              url=null;
+            }
           }
         }
       } else {
@@ -350,7 +362,6 @@ main.service('Github', function($http,$timeout) {
 
 
     if(url!=null) {
-      console.debug({trying:url})
       $http.get(url,{headers:{"Authorization":"token "+CONFIG.access_token}})
       .success(function (data,status,headers,config) {
         githubrepo.processcommits(data,status,headers,config);
